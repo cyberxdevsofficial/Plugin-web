@@ -4,82 +4,44 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ANUGA SENITHU - WhatsApp Bot Plugins</title>
-
-  <!-- Google Font for hacker aesthetic -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Matrix-style canvas background -->
   <canvas id="matrix"></canvas>
 
   <div class="container">
     <header>
-      <h1>ANUGA SENITHU — WhatsApp Bot Plugins</h1>
-      <p class="subtitle">Add, share & manage WhatsApp bot plugins — admin access required to add.</p>
+      <div>
+        <h1>ANUGA SENITHU — WhatsApp Bot Plugins</h1>
+        <p class="subtitle">Browse community plugins for your WhatsApp bot.</p>
+      </div>
       <div class="controls">
-        <button id="btn-add-plugin" class="btn">Add Plugin (Admin)</button>
-        <button id="btn-clear-storage" class="btn ghost">Clear All (local)</button>
+        <a href="login.html" class="btn">Admin Login</a>
       </div>
     </header>
 
     <main>
       <section class="stats">
         <div class="stat">Plugins: <span id="stat-plugins">0</span></div>
-        <div class="stat">Local Users (sim): <span id="stat-users">1</span></div>
-        <div class="stat">Views: <span id="stat-views">0</span></div>
+        <div class="stat">Total Views: <span id="stat-views">0</span></div>
       </section>
 
-      <section id="plugin-list" class="plugin-list">
-        <!-- plugin cards inserted here -->
-      </section>
+      <section id="plugin-list" class="plugin-list"></section>
     </main>
 
     <footer>
-      <small>Built for <b>Anuga Senithu</b> • Password for admin functions: <code>Anuga123</code></small>
+      <small>ANUGA SENITHU — Plugins</small>
     </footer>
   </div>
 
-  <!-- Add / Edit Plugin Modal -->
-  <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
-    <div class="modal-panel">
-      <button id="modal-close" class="modal-close" title="Close">&times;</button>
-      <h2 id="modal-title">Add Plugin</h2>
-
-      <!-- Admin password prompt (first step) -->
-      <div id="password-step" class="modal-step">
-        <label>Enter admin password to continue:</label>
-        <input id="admin-password" type="password" placeholder="Admin password" />
-        <div class="modal-actions">
-          <button id="password-confirm" class="btn">Confirm</button>
-        </div>
-        <p class="hint">Use password: <code>Anuga123</code></p>
-        <p id="password-error" class="error hidden">Wrong password — try again.</p>
-      </div>
-
-      <!-- Plugin form (shown after correct password) -->
-      <div id="plugin-step" class="modal-step hidden">
-        <label>Plugin Title</label>
-        <input id="plugin-title" type="text" placeholder="e.g. Auto Welcome" />
-
-        <label>Short Description</label>
-        <textarea id="plugin-desc" rows="3" placeholder="Describe what the plugin does"></textarea>
-
-        <label>Download / Script Link (optional)</label>
-        <input id="plugin-link" type="url" placeholder="https://example.com/plugin.zip" />
-
-        <label>Image URL (optional)</label>
-        <input id="plugin-img" type="url" placeholder="https://..." />
-
-        <div class="modal-actions">
-          <button id="plugin-save" class="btn">Save Plugin</button>
-          <button id="plugin-cancel" class="btn ghost">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script src="script.js"></script>
+  <script>
+    // index-specific initialization
+    (function(){
+      incrementViewCount(); // counts global site views
+      renderPublicPlugins();
+    })();
+  </script>
 </body>
 </html>
