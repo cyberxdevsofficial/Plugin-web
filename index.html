@@ -1,47 +1,23 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ANUGA SENITHU - WhatsApp Bot Plugins</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>ANUGA SENITHU WHATSAPP BOT PLUGINS</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <canvas id="matrix"></canvas>
+  <header>
+    <h1>ANUGA SENITHU WHATSAPP BOT PLUGINS</h1>
+    <nav>
+      <a href="login.html">Admin Login</a>
+    </nav>
+  </header>
 
-  <div class="container">
-    <header>
-      <div>
-        <h1>ANUGA SENITHU — WhatsApp Bot Plugins</h1>
-        <p class="subtitle">Browse community plugins for your WhatsApp bot.</p>
-      </div>
-      <div class="controls">
-        <a href="login.html" class="btn">Admin Login</a>
-      </div>
-    </header>
-
-    <main>
-      <section class="stats">
-        <div class="stat">Plugins: <span id="stat-plugins">0</span></div>
-        <div class="stat">Total Views: <span id="stat-views">0</span></div>
-      </section>
-
-      <section id="plugin-list" class="plugin-list"></section>
-    </main>
-
-    <footer>
-      <small>ANUGA SENITHU — Plugins</small>
-    </footer>
-  </div>
+  <main>
+    <h2>Available Plugins</h2>
+    <div id="plugin-list"></div>
+  </main>
 
   <script src="script.js"></script>
-  <script>
-    // index-specific initialization
-    (function(){
-      incrementViewCount(); // counts global site views
-      renderPublicPlugins();
-    })();
-  </script>
 </body>
 </html>
