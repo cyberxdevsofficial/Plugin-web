@@ -1,0 +1,152 @@
+/* style.css
+   Hacker aesthetic with Orbitron font and matrix background
+*/
+
+:root{
+  --bg:#071014;
+  --panel: rgba(0,0,0,0.45);
+  --accent: #00ff99;
+  --muted: #9fd4b7;
+  --glass: rgba(255,255,255,0.03);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: 'Orbitron', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:var(--muted);
+  overflow-x:hidden;
+}
+
+/* Canvas sits behind everything */
+#matrix{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  display:block;
+  width:100%;
+  height:100%;
+  background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.6));
+}
+
+/* Content container */
+.container{
+  position:relative;
+  z-index:2;
+  max-width:1100px;
+  margin:40px auto;
+  padding:28px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.12));
+  border-radius:12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  border:1px solid rgba(0,255,153,0.06);
+}
+
+/* Header */
+header{
+  display:flex;
+  align-items:flex-start;
+  gap:20px;
+  justify-content:space-between;
+}
+h1{
+  margin:0;
+  color:var(--accent);
+  font-size:clamp(1.4rem,2.2vw,2.4rem);
+  letter-spacing:1px;
+  text-shadow: 0 1px 8px rgba(0,255,153,0.06);
+}
+.subtitle{margin:6px 0 0;color: #9bd8bf;font-size:0.95rem}
+
+/* Controls */
+.controls{display:flex;gap:8px;margin-left:auto}
+.btn{
+  background:linear-gradient(180deg, rgba(0,255,153,0.07), rgba(0,255,153,0.02));
+  color:var(--accent);
+  border:1px solid rgba(0,255,153,0.12);
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover{transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.5)}
+.btn.ghost{
+  background:transparent;color:var(--muted);border:1px dashed rgba(255,255,255,0.04)
+}
+
+/* Stats panel */
+.stats{
+  margin:18px 0;
+  display:flex;
+  gap:12px;
+}
+.stat{
+  background:var(--panel);
+  border-radius:10px;
+  padding:10px 14px;
+  color:var(--muted);
+  font-weight:700;
+  border:1px solid rgba(0,255,153,0.03)
+}
+
+/* Plugin list grid */
+.plugin-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+  gap:14px;
+  margin-top:14px;
+}
+.plugin-card{
+  background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.12));
+  border-radius:10px;
+  padding:12px;
+  border:1px solid rgba(0,255,153,0.03);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:140px;
+}
+.plugin-card img{
+  width:100%;
+  height:110px;
+  object-fit:cover;
+  border-radius:6px;
+  border:1px solid rgba(255,255,255,0.03);
+}
+.plugin-title{color:var(--accent);font-size:1.05rem;margin:0}
+.plugin-desc{flex:1;color:#bfead0;font-size:0.9rem}
+.plugin-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* Footer */
+footer{margin-top:18px;text-align:center;color:#6fbf9e;padding-top:10px;border-top:1px dashed rgba(255,255,255,0.02)}
+
+/* Modal */
+.modal{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.55);z-index:8;
+}
+.hidden{display:none}
+.modal-panel{
+  width:420px;max-width:92%;
+  background:linear-gradient(180deg, rgba(0,0,0,0.75), rgba(0,0,0,0.9));
+  border-radius:12px;padding:18px;border:1px solid rgba(0,255,153,0.06);
+}
+.modal-close{float:right;background:transparent;border:0;color:var(--muted);font-size:1.3rem;cursor:pointer}
+.modal-step{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.modal-step input, .modal-step textarea{
+  width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);
+  background:rgba(255,255,255,0.02);color:var(--muted);outline:none;
+}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.hint{color:#8bd9b9;font-size:0.85rem}
+.error{color:#ff6b6b}
+small code{background:#071414;padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.02)}
+
+/* Responsive */
+@media (max-width:600px){
+  header{flex-direction:column;align-items:flex-start}
+  .controls{margin-left:0;width:100%;gap:6px}
+}
