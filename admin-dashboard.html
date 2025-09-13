@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard — ANUGA SENITHU</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">Manage plugins — create, edit, delete.</p>
+      </div>
+      <div class="controls">
+        <button id="btn-logout" class="btn ghost">Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="stats">
+        <div class="stat">Total Plugins: <span id="admin-total-plugins">0</span></div>
+        <div class="stat">Total Views: <span id="admin-total-views">0</span></div>
+      </section>
+
+      <div class="admin-actions">
+        <button id="btn-open-add" class="btn">Add Plugin</button>
+        <button id="btn-seed" class="btn ghost">Seed Demo (if empty)</button>
+      </div>
+
+      <section id="admin-plugin-list" class="plugin-list" style="margin-top:14px;"></section>
+    </main>
+
+    <footer>
+      <small>Only logged-in admins can create / edit / delete plugins.</small>
+    </footer>
+  </div>
+
+  <!-- Modal for Add/Edit plugin -->
+  <div id="modal" class="modal hidden" role="dialog">
+    <div class="modal-panel">
+      <button id="modal-close" class="modal-close" title="Close">&times;</button>
+      <h2 id="modal-title">Add Plugin</h2>
+
+      <div class="modal-step" id="plugin-form">
+        <label>Plugin Title</label>
+        <input id="plugin-title" type="text" />
+
+        <label>Short Description</label>
+        <textarea id="plugin-desc" rows="3"></textarea>
+
+        <label>Download / Script Link (optional)</label>
+        <input id="plugin-link" type="url" />
+
+        <label>Image URL (optional)</label>
+        <input id="plugin-img" type="url" />
+
+        <div class="modal-actions">
+          <button id="plugin-save" class="btn">Save</button>
+          <button id="plugin-cancel" class="btn ghost">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // guard: redirect non-admins to login
+    (function(){
+      if(!isAdminSession()){
+        location.href = 'login.html';
+        return;
+      }
+      // initialize admin UI
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        sessionStorage.removeItem('anuga_is_admin');
+        location.href = 'index.html';
+      });
+
+      document.getElementById('btn-open-add').addEventListener('click', ()=>{
+        openAdminModal();
+      });
+      document.getElementById('btn-seed').addEventListener('click', ()=>{
+        seedIfEmpty();
+        renderAdminPlugins();
+      });
+
+      renderAdminStats();
+      renderAdminPlugins();
+    })();
+  </script>
+</body>
+</html>
