@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Login — ANUGA SENITHU</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+
+  <div class="container small">
+    <header>
+      <h1>Admin Login</h1>
+    </header>
+
+    <main>
+      <form id="login-form" class="card-form">
+        <label>Username</label>
+        <input id="login-username" type="text" autocomplete="username" required />
+
+        <label>Password</label>
+        <input id="login-password" type="password" autocomplete="current-password" required />
+
+        <div class="modal-actions">
+          <button type="submit" class="btn">Sign in</button>
+          <a href="index.html" class="btn ghost">Back</a>
+        </div>
+        <p id="login-error" class="error hidden">Invalid credentials</p>
+      </form>
+    </main>
+
+    <footer>
+      <small>Please sign in to manage plugins.</small>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // login handling
+    (function(){
+      const form = document.getElementById('login-form');
+      const err = document.getElementById('login-error');
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        const u = document.getElementById('login-username').value.trim();
+        const p = document.getElementById('login-password').value;
+        if(authenticateAdmin(u,p)){
+          // mark session and redirect to admin dashboard
+          sessionStorage.setItem('anuga_is_admin','1');
+          location.href = 'admin-dashboard.html';
+        } else {
+          err.classList.remove('hidden');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
