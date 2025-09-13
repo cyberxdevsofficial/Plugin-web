@@ -1,297 +1,244 @@
-/* script.js
-   Implements:
-   - Matrix background
-   - plugin storage in localStorage
-   - admin password flow (Anuga123)
+/* script.js — shared logic for plugins and admin auth
+   NOTE: Password is NOT shown in the UI. For client-side demo, the credentials are:
+     username: admin
+     password: Anuga123
+   (these are used only by JS to validate login; for production, use a server.)
 */
 
-const ADMIN_PASSWORD = 'Anuga123';
-const STORAGE_KEY = 'anuga_plugins_v1';
+const STORAGE_KEY = 'anuga_plugins_v2';
+const VIEWS_KEY = 'anuga_total_views_v1';
 
-// --- Matrix background ---
-(function matrixBackground(){
-  const canvas = document.getElementById('matrix');
-  const ctx = canvas.getContext('2d');
-  let width = canvas.width = innerWidth;
-  let height = canvas.height = innerHeight;
-  const cols = Math.floor(width / 14);
-  const ypos = Array(cols).fill(0);
+// ---------- ADMIN CREDENTIALS (client-side demo only) ----------
+const ADMIN_CREDENTIALS = {
+  username: 'admin',
+  password: 'Anuga123' // keep out of UI
+};
 
-  function resize(){
-    width = canvas.width = innerWidth;
-    height = canvas.height = innerHeight;
-  }
-  addEventListener('resize', resize);
-
-  function draw(){
-    ctx.fillStyle = 'rgba(0,0,0,0.06)';
-    ctx.fillRect(0,0,width,height);
-
-    ctx.fillStyle = '#00ff99';
-    ctx.font = '14px monospace';
-
-    ypos.forEach((y, ind) => {
-      const text = String.fromCharCode(33 + Math.random()*33);
-      const x = ind * 14;
-      ctx.fillText(text, x, y);
-      if (y > 100 + Math.random()*10000) ypos[ind] = 0;
-      else ypos[ind] = y + 14;
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-// --- Helper DOM references ---
-const btnAdd = document.getElementById('btn-add-plugin');
-const btnClear = document.getElementById('btn-clear-storage');
-const pluginListEl = document.getElementById('plugin-list');
-const statPlugins = document.getElementById('stat-plugins');
-const statUsers = document.getElementById('stat-users');
-const statViews = document.getElementById('stat-views');
-
-// Modal elements
-const modal = document.getElementById('modal');
-const modalClose = document.getElementById('modal-close');
-const passwordStep = document.getElementById('password-step');
-const pluginStep = document.getElementById('plugin-step');
-const adminPasswordInput = document.getElementById('admin-password');
-const passwordConfirm = document.getElementById('password-confirm');
-const passwordError = document.getElementById('password-error');
-
-const pluginTitle = document.getElementById('plugin-title');
-const pluginDesc = document.getElementById('plugin-desc');
-const pluginLink = document.getElementById('plugin-link');
-const pluginImg = document.getElementById('plugin-img');
-const pluginSave = document.getElementById('plugin-save');
-const pluginCancel = document.getElementById('plugin-cancel');
-const modalTitle = document.getElementById('modal-title');
-
-let editingId = null;
-let viewCount = 0;
-
-// --- Storage functions ---
+// ---------- Utilities ----------
 function loadPlugins(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   }catch(e){
-    console.error('load error', e);
+    console.error('loadPlugins error', e);
     return [];
   }
 }
 function savePlugins(list){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
+function incrementViewCount(){
+  const v = Number(localStorage.getItem(VIEWS_KEY) || 0) + 1;
+  localStorage.setItem(VIEWS_KEY, String(v));
+}
+function getTotalViews(){
+  return Number(localStorage.getItem(VIEWS_KEY) || 0);
+}
+function isAdminSession(){
+  return sessionStorage.getItem('anuga_is_admin') === '1';
+}
+function authenticateAdmin(u,p){
+  return u === ADMIN_CREDENTIALS.username && p === ADMIN_CREDENTIALS.password;
+}
 
-// --- UI rendering ---
-function renderPlugins(){
+// ---------- Matrix background ----------
+(function matrixBackground(){
+  const canvas = document.getElementById('matrix');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = innerWidth;
+  let height = canvas.height = innerHeight;
+  const fontSize = 14;
+  let columns = Math.floor(width / fontSize);
+  let drops = new Array(columns).fill(0);
+
+  function resize(){
+    width = canvas.width = innerWidth;
+    height = canvas.height = innerHeight;
+    columns = Math.floor(width / fontSize);
+    drops = new Array(columns).fill(0);
+  }
+  addEventListener('resize', resize);
+
+  function draw(){
+    ctx.fillStyle = 'rgba(0,0,0,0.07)';
+    ctx.fillRect(0,0,width,height);
+    ctx.fillStyle = '#00ff99';
+    ctx.font = fontSize + 'px monospace';
+    for(let i=0;i<drops.length;i++){
+      const text = String.fromCharCode(33 + Math.random() * 90);
+      const x = i * fontSize;
+      const y = drops[i] * fontSize;
+      ctx.fillText(text, x, y);
+      if(y > height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ---------- Public rendering (index.html) ----------
+function renderPublicPlugins(){
   const list = loadPlugins();
-  pluginListEl.innerHTML = '';
-  list.forEach(plugin => {
+  const root = document.getElementById('plugin-list');
+  const statPlugins = document.getElementById('stat-plugins');
+  const statViews = document.getElementById('stat-views');
+  if(!root) return;
+  root.innerHTML = '';
+  list.forEach(p => {
     const card = document.createElement('article');
     card.className = 'plugin-card';
-    card.dataset.id = plugin.id;
-
     const img = document.createElement('img');
-    img.src = plugin.img || 'https://via.placeholder.com/600x200?text=Plugin';
-    img.alt = plugin.title;
-
+    img.src = p.img || 'https://via.placeholder.com/800x300?text=Plugin';
+    img.alt = p.title || 'plugin';
     const title = document.createElement('h3');
     title.className = 'plugin-title';
-    title.textContent = plugin.title;
-
+    title.textContent = p.title;
     const desc = document.createElement('p');
     desc.className = 'plugin-desc';
-    desc.textContent = plugin.desc || '';
-
+    desc.textContent = p.desc || '';
     const actions = document.createElement('div');
     actions.className = 'plugin-actions';
+    const open = document.createElement('a');
+    open.className = 'btn';
+    open.textContent = 'Open';
+    open.href = p.link || '#';
+    open.target = '_blank';
+    open.rel = 'noopener';
 
-    const openBtn = document.createElement('a');
-    openBtn.className = 'btn';
-    openBtn.textContent = 'Open';
-    openBtn.href = plugin.link || '#';
-    openBtn.target = '_blank';
-    openBtn.rel = 'noopener';
-
-    // admin only actions (edit/delete) - require password flow
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn ghost';
-    editBtn.textContent = 'Edit';
-    editBtn.onclick = () => openEditFlow(plugin.id);
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn ghost';
-    delBtn.textContent = 'Delete';
-    delBtn.onclick = () => confirmDelete(plugin.id);
-
-    actions.appendChild(openBtn);
-    actions.appendChild(editBtn);
-    actions.appendChild(delBtn);
-
+    actions.appendChild(open);
     card.appendChild(img);
     card.appendChild(title);
     card.appendChild(desc);
     card.appendChild(actions);
-
-    pluginListEl.appendChild(card);
+    root.appendChild(card);
   });
-
-  statPlugins.textContent = list.length;
-  statViews.textContent = viewCount;
+  if(statPlugins) statPlugins.textContent = list.length;
+  if(statViews) statViews.textContent = getTotalViews();
 }
 
-// --- Modal flows ---
-function openModal(){
-  modal.classList.remove('hidden');
-  passwordStep.classList.remove('hidden');
-  pluginStep.classList.add('hidden');
-  adminPasswordInput.value = '';
-  passwordError.classList.add('hidden');
-  modalTitle.textContent = editingId ? 'Edit Plugin' : 'Add Plugin';
-}
-function closeModal(){
-  modal.classList.add('hidden');
-  editingId = null;
-  clearPluginForm();
+// ---------- Admin UI (admin-dashboard.html) ----------
+let adminEditingId = null;
+
+function renderAdminStats(){
+  const sPlugins = document.getElementById('admin-total-plugins');
+  const sViews = document.getElementById('admin-total-views');
+  if(sPlugins) sPlugins.textContent = loadPlugins().length;
+  if(sViews) sViews.textContent = getTotalViews();
 }
 
-function clearPluginForm(){
-  pluginTitle.value = '';
-  pluginDesc.value = '';
-  pluginLink.value = '';
-  pluginImg.value = '';
-}
-
-// Password confirm
-passwordConfirm.addEventListener('click', () => {
-  const val = adminPasswordInput.value || '';
-  if(val === ADMIN_PASSWORD){
-    // allowed, reveal plugin form
-    passwordStep.classList.add('hidden');
-    pluginStep.classList.remove('hidden');
-
-    // if editing, populate form
-    if(editingId){
-      const list = loadPlugins();
-      const plugin = list.find(p => p.id === editingId);
-      if(plugin){
-        pluginTitle.value = plugin.title || '';
-        pluginDesc.value = plugin.desc || '';
-        pluginLink.value = plugin.link || '';
-        pluginImg.value = plugin.img || '';
-      }
-    }
-  } else {
-    passwordError.classList.remove('hidden');
-    passwordError.textContent = 'Wrong password — try again.';
-  }
-});
-
-// Save plugin
-pluginSave.addEventListener('click', () => {
-  const title = pluginTitle.value.trim();
-  if(!title){
-    alert('Please provide a plugin title.');
-    return;
-  }
-  const desc = pluginDesc.value.trim();
-  const link = pluginLink.value.trim();
-  const img = pluginImg.value.trim();
-
+function renderAdminPlugins(){
   const list = loadPlugins();
-  if(editingId){
-    // update
-    const idx = list.findIndex(p => p.id === editingId);
-    if(idx > -1){
-      list[idx].title = title;
-      list[idx].desc = desc;
-      list[idx].link = link;
-      list[idx].img = img;
-      list[idx].updatedAt = new Date().toISOString();
-    }
-  } else {
-    const id = 'p_' + Date.now();
-    list.unshift({
-      id, title, desc, link, img, createdAt: new Date().toISOString()
+  const root = document.getElementById('admin-plugin-list');
+  if(!root) return;
+  root.innerHTML = '';
+  list.forEach(p => {
+    const card = document.createElement('article');
+    card.className = 'plugin-card';
+    const img = document.createElement('img'); img.src = p.img || 'https://via.placeholder.com/800x300?text=Plugin';
+    const title = document.createElement('h3'); title.className = 'plugin-title'; title.textContent = p.title;
+    const desc = document.createElement('p'); desc.className = 'plugin-desc'; desc.textContent = p.desc || '';
+    const actions = document.createElement('div'); actions.className = 'plugin-actions';
+
+    const open = document.createElement('a'); open.className = 'btn'; open.textContent='Open'; open.href = p.link || '#'; open.target='_blank'; open.rel='noopener';
+    const edit = document.createElement('button'); edit.className='btn ghost'; edit.textContent='Edit';
+    const del = document.createElement('button'); del.className='btn ghost'; del.textContent='Delete';
+
+    edit.addEventListener('click', () => {
+      adminEditingId = p.id;
+      openAdminModal(p);
     });
-  }
-  savePlugins(list);
-  renderPlugins();
-  closeModal();
-});
+    del.addEventListener('click', () => {
+      if(!isAdminSession()){ alert('Only admins can delete.'); return; }
+      if(!confirm('Delete this plugin?')) return;
+      const arr = loadPlugins().filter(x => x.id !== p.id);
+      savePlugins(arr);
+      renderAdminPlugins(); renderAdminStats();
+    });
 
-// Cancel in form
-pluginCancel.addEventListener('click', closeModal);
-
-// open add plugin button -> start modal (password step)
-btnAdd.addEventListener('click', () => {
-  editingId = null;
-  openModal();
-});
-
-// Clear all local storage (danger)
-btnClear.addEventListener('click', () => {
-  if(confirm('Clear ALL plugin entries from localStorage? This cannot be undone.')){
-    localStorage.removeItem(STORAGE_KEY);
-    renderPlugins();
-  }
-});
-
-// Modal close
-modalClose.addEventListener('click', closeModal);
-modal.addEventListener('click', (e) => {
-  if(e.target === modal) closeModal();
-});
-
-// --- Edit / Delete flows require admin password first ---
-function openEditFlow(id){
-  editingId = id;
-  openModal();
-  // Password step takes care of showing form after correct password
+    actions.appendChild(open); actions.appendChild(edit); actions.appendChild(del);
+    card.appendChild(img); card.appendChild(title); card.appendChild(desc); card.appendChild(actions);
+    root.appendChild(card);
+  });
+  renderAdminStats();
 }
 
-function confirmDelete(id){
-  const ok = confirm('Are you sure you want to delete this plugin? (Admin password required)');
-  if(!ok) return;
-  // prompt for password
-  const pw = prompt('Enter admin password to delete:');
-  if(pw !== ADMIN_PASSWORD){
-    alert('Wrong password. Action cancelled.');
-    return;
-  }
-  const list = loadPlugins().filter(p => p.id !== id);
-  savePlugins(list);
-  renderPlugins();
+// ---------- Admin modal logic (shared between admin page and single-page admin flows) ----------
+function openAdminModal(plugin){
+  const modal = document.getElementById('modal');
+  if(!modal) return;
+  modal.classList.remove('hidden');
+  document.getElementById('modal-title').textContent = plugin ? 'Edit Plugin' : 'Add Plugin';
+  document.getElementById('plugin-title').value = plugin ? plugin.title : '';
+  document.getElementById('plugin-desc').value = plugin ? plugin.desc : '';
+  document.getElementById('plugin-link').value = plugin ? plugin.link : '';
+  document.getElementById('plugin-img').value = plugin ? plugin.img : '';
+  adminEditingId = plugin ? plugin.id : null;
 }
 
-// increment view count when user clicks into page
-window.addEventListener('focus', ()=>{ viewCount++; statViews.textContent = viewCount; });
+function closeAdminModal(){
+  const modal = document.getElementById('modal');
+  if(!modal) return;
+  modal.classList.add('hidden');
+  adminEditingId = null;
+  document.getElementById('plugin-title').value = '';
+  document.getElementById('plugin-desc').value = '';
+  document.getElementById('plugin-link').value = '';
+  document.getElementById('plugin-img').value = '';
+}
 
-// initial seed demo plugin if empty
-(function seedIfEmpty(){
+// modal event wiring (if admin page present)
+(function modalWire(){
+  const modal = document.getElementById('modal');
+  if(!modal) return;
+  document.getElementById('modal-close').addEventListener('click', closeAdminModal);
+  document.getElementById('plugin-cancel').addEventListener('click', closeAdminModal);
+  document.getElementById('plugin-save').addEventListener('click', () => {
+    if(!isAdminSession()){ alert('Only admins may save plugins.'); closeAdminModal(); return; }
+    const title = document.getElementById('plugin-title').value.trim();
+    if(!title){ alert('Provide a title'); return; }
+    const desc = document.getElementById('plugin-desc').value.trim();
+    const link = document.getElementById('plugin-link').value.trim();
+    const img = document.getElementById('plugin-img').value.trim();
+    const list = loadPlugins();
+    if(adminEditingId){
+      const idx = list.findIndex(p => p.id === adminEditingId);
+      if(idx > -1){
+        list[idx].title = title; list[idx].desc = desc; list[idx].link = link; list[idx].img = img;
+        list[idx].updatedAt = new Date().toISOString();
+      }
+    } else {
+      const id = 'p_' + Date.now();
+      list.unshift({ id, title, desc, link, img, createdAt: new Date().toISOString() });
+    }
+    savePlugins(list);
+    closeAdminModal();
+    renderAdminPlugins();
+  });
+  // allow clicking outside to close
+  modal.addEventListener('click', (e)=>{ if(e.target === modal) closeAdminModal(); });
+})();
+
+// ---------- Seed demo if empty ----------
+function seedIfEmpty(){
   const list = loadPlugins();
   if(list.length === 0){
     const demo = [
-      {
-        id: 'p_demo_1',
-        title: 'Auto Greeting Plugin',
-        desc: 'Sends automatic welcome messages to new group members with variables and buttons.',
-        link: '#',
-        img: 'https://images.unsplash.com/photo-1504805572947-34fad45aed93?auto=format&fit=crop&w=800&q=60',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 'p_demo_2',
-        title: 'Quick Reply Commands',
-        desc: 'Framework for creating quick command replies & keyword triggers for your bot.',
-        link: '#',
-        img: '',
-        createdAt: new Date().toISOString()
-      }
+      { id: 'p_demo_1', title:'Auto Greeting Plugin', desc:'Sends welcome messages to new members.', link:'#', img:'https://images.unsplash.com/photo-1504805572947-34fad45aed93?auto=format&fit=crop&w=800&q=60', createdAt:new Date().toISOString() },
+      { id: 'p_demo_2', title:'Quick Reply Commands', desc:'Create quick replies & keyword triggers.', link:'#', img:'', createdAt:new Date().toISOString() }
     ];
     savePlugins(demo);
   }
-  renderPlugins();
-})();
+}
+
+// ---------- Misc: expose some functions for pages ----------
+window.loadPlugins = loadPlugins;
+window.savePlugins = savePlugins;
+window.isAdminSession = isAdminSession;
+window.authenticateAdmin = authenticateAdmin;
+window.renderAdminPlugins = renderAdminPlugins;
+window.renderAdminStats = renderAdminStats;
+window.renderPublicPlugins = renderPublicPlugins;
+window.incrementViewCount = incrementViewCount;
+window.seedIfEmpty = seedIfEmpty;
