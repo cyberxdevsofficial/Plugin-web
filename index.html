@@ -6,55 +6,45 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>🔥 ANUGA SENITHU WHATSAPP BOT PLUGINS 🔥</h1>
-    <div id="plugin-list"></div>
-  </div>
+  <h1>🔥 Plugins 🔥</h1>
+  <div id="plugin-list"></div>
 
   <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    // ✅ Replace with your Firebase config
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDkZ3D3NPNoZf1LdcLGMBRKcTWZUd71Gp0",
       authDomain: "anugasenithu-3912d.firebaseapp.com",
-      projectId: "anugasenithu-3912d",
-      storageBucket: "anugasenithu-3912d.firebasestorage.app",
-      messagingSenderId: "372208145555",
-      appId: "1:372208145555:web:e3532f48ec1e32f669e966"
+      projectId: "anugasenithu-3912d"
     };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     async function loadPlugins() {
       const pluginList = document.getElementById("plugin-list");
       pluginList.innerHTML = "";
-
-      const querySnapshot = await getDocs(collection(db, "plugins"));
-      querySnapshot.forEach((doc) => {
+      const snapshot = await db.collection("plugins").get();
+      snapshot.forEach(doc => {
         const plugin = doc.data();
-        const div = document.createElement("div");
-        div.className = "plugin";
-        div.innerHTML = `
-          <h2>${plugin.name}</h2>
-          <p>${plugin.description}</p>
-          <pre>${plugin.code}</pre>
-          <button onclick="downloadPlugin(\`${plugin.name}\`, \`${plugin.code}\`)">Download</button>
+        pluginList.innerHTML += `
+          <div class="plugin">
+            <h2>${plugin.name}</h2>
+            <p>${plugin.description}</p>
+            <pre>${plugin.code}</pre>
+            <button onclick="downloadPlugin('${plugin.name}', \`${plugin.code}\`)">Download</button>
+          </div>
         `;
-        pluginList.appendChild(div);
       });
     }
 
-    window.downloadPlugin = function(name, code) {
+    function downloadPlugin(name, code) {
       const blob = new Blob([code], { type: "text/plain" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${name}.txt`;
+      a.download = name + ".txt";
       a.click();
-    };
+    }
 
     loadPlugins();
   </script>
