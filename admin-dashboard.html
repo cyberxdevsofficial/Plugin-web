@@ -7,35 +7,35 @@
 </head>
 <body>
   <h1>Admin Dashboard</h1>
-
   <form id="plugin-form">
     <input type="text" id="name" placeholder="Plugin Name" required><br>
-    <textarea id="description" placeholder="Plugin Description"></textarea><br>
-    <textarea id="code" placeholder="Paste Plugin Code Here"></textarea><br>
+    <textarea id="description" placeholder="Description"></textarea><br>
+    <textarea id="code" placeholder="Paste Plugin Code"></textarea><br>
     <button type="submit">Add Plugin</button>
   </form>
-
   <div id="admin-plugins"></div>
 
   <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDkZ3D3NPNoZf1LdcLGMBRKcTWZUd71Gp0",
       authDomain: "anugasenithu-3912d.firebaseapp.com",
-      projectId: "anugasenithu-3912d",
-      storageBucket: "anugasenithu-3912d.firebasestorage.app",
-      messagingSenderId: "372208145555",
-      appId: "1:372208145555:web:e3532f48ec1e32f669e966"
+      projectId: "anugasenithu-3912d"
     };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Protect page: only logged in admins can stay
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
+    });
 
     const form = document.getElementById("plugin-form");
-    const adminPlugins = document.getElementById("admin-plugins");
+    const pluginDiv = document.getElementById("admin-plugins");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -43,30 +43,29 @@
       const description = document.getElementById("description").value;
       const code = document.getElementById("code").value;
 
-      await addDoc(collection(db, "plugins"), { name, description, code });
+      await db.collection("plugins").add({ name, description, code });
       form.reset();
       loadPlugins();
     });
 
     async function loadPlugins() {
-      adminPlugins.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "plugins"));
-      querySnapshot.forEach((docSnap) => {
-        const plugin = docSnap.data();
-        const div = document.createElement("div");
-        div.innerHTML = `
-          <h3>${plugin.name}</h3>
-          <button onclick="deletePlugin('${docSnap.id}')">Delete</button>
+      pluginDiv.innerHTML = "";
+      const snapshot = await db.collection("plugins").get();
+      snapshot.forEach(doc => {
+        const plugin = doc.data();
+        pluginDiv.innerHTML += `
+          <div>
+            <h3>${plugin.name}</h3>
+            <button onclick="deletePlugin('${doc.id}')">Delete</button>
+          </div>
         `;
-        adminPlugins.appendChild(div);
       });
     }
 
-    window.deletePlugin = async function(id) {
-      await deleteDoc(doc(db, "plugins", id));
+    async function deletePlugin(id) {
+      await db.collection("plugins").doc(id).delete();
       loadPlugins();
-    };
-
+    }
     loadPlugins();
   </script>
 </body>
